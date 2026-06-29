@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  # The Vector Database (PostgreSQL with pgvector extension)
+  db:
+    image: ankane/pgvector:latest
+    environment:
+      POSTGRES_DB: financial_agent_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: adminpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  pgdata:

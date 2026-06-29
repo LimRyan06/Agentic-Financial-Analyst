@@ -1,0 +1,19 @@
+# Python
+backend/venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+.env.*
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+build/
+.DS_Store
+
+# IDEs
+.vscode/
+.idea/
