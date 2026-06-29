@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+pydantic
+python-dotenv
+langchain
+langchain-community
+langchain-anthropic
+langchain-postgres
+psycopg2-binary
+pandas
+openpyxl
+sentence-transformers
