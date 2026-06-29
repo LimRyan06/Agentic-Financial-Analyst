@@ -11,7 +11,7 @@ load_dotenv()
 
 # We will use Ollama with a small embedding model like 'nomic-embed-text' or 'llama3'
 EMBEDDING_MODEL = "nomic-embed-text" 
-DB_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://admin:adminpassword@localhost:5432/financial_agent_db")
+DB_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://admin:adminpassword@localhost:5433/financial_agent_db")
 
 def parse_excel_to_documents(file_path: str):
     """
