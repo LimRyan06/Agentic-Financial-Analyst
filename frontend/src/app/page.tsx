@@ -17,7 +17,7 @@ export default function Home() {
 
     setIsUploading(true);
     try {
-      const res = await fetch("http://localhost:8000/api/upload", {
+      const res = await fetch("http://localhost:8080/api/upload", {
         method: "POST",
         body: formData,
       });
@@ -40,7 +40,7 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8000/api/chat", {
+      const res = await fetch("http://localhost:8080/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMessage.content }),
