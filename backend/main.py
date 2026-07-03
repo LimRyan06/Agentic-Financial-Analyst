@@ -6,7 +6,7 @@ import os
 import shutil
 
 from agents import create_financial_agent
-from rag_pipeline import parse_excel_to_documents, ingest_documents
+from rag_pipeline import parse_file_to_documents, ingest_documents
 
 app = FastAPI(
     title="Financial Agent API",
@@ -45,15 +45,15 @@ class ChatResponse(BaseModel):
 @app.post("/api/upload")
 async def upload_file(file: UploadFile = File(...)):
     """Endpoint to upload Excel files, parse them, and store them in the Vector DB."""
-    if not file.filename.endswith(('.xls', '.xlsx')):
-        raise HTTPException(status_code=400, detail="Only Excel files are supported.")
+    if not file.filename.endswith(('.xls', '.xlsx', '.csv')):
+        raise HTTPException(status_code=400, detail="Only Excel (.xls, .xlsx) and CSV files are supported.")
         
     temp_path = f"temp_{file.filename}"
     try:
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
-        docs = parse_excel_to_documents(temp_path)
+        docs = parse_file_to_documents(temp_path)
         ingest_documents(docs)
         return {"status": "success", "message": f"Successfully ingested {file.filename} into the vector database."}
     finally:

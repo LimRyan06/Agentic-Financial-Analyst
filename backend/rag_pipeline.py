@@ -13,32 +13,37 @@ load_dotenv()
 EMBEDDING_MODEL = "nomic-embed-text" 
 DB_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://admin:adminpassword@localhost:5433/financial_agent_db")
 
-def parse_excel_to_documents(file_path: str):
+def parse_file_to_documents(file_path: str):
     """
-    Parses an Excel file into a list of LangChain Documents.
-    This is useful for reading financial datasets.
+    Parses an Excel (.xlsx/.xls) or CSV file into a list of LangChain Documents.
     """
-    print(f"Parsing Excel file: {file_path}")
-    # Load all sheets into a dictionary of DataFrames
-    sheets = pd.read_excel(file_path, sheet_name=None)
+    ext = os.path.splitext(file_path)[1].lower()
     documents = []
-    
-    for sheet_name, df in sheets.items():
-        # Clean the dataframe (drop empty rows/cols)
+
+    if ext == ".csv":
+        print(f"Parsing CSV file: {file_path}")
+        df = pd.read_csv(file_path)
         df = df.dropna(how='all').dropna(axis=1, how='all')
-        
-        # Convert each row into a string representation for the LLM to understand
-        # We create a 'content' column that merges all row data
-        df['page_content'] = df.apply(lambda row: " | ".join([f"{col}: {val}" for col, val in row.items() if pd.notna(val)]), axis=1)
-        
-        # Add metadata so the agent knows which sheet/file this came from
-        df['sheet_name'] = sheet_name
+        df['page_content'] = df.apply(
+            lambda row: " | ".join([f"{col}: {val}" for col, val in row.items() if pd.notna(val)]), axis=1
+        )
+        df['sheet_name'] = "Sheet1"
         df['source_file'] = os.path.basename(file_path)
-        
         loader = DataFrameLoader(df, page_content_column="page_content")
-        sheet_docs = loader.load()
-        documents.extend(sheet_docs)
-        
+        documents.extend(loader.load())
+    else:
+        print(f"Parsing Excel file: {file_path}")
+        sheets = pd.read_excel(file_path, sheet_name=None)
+        for sheet_name, df in sheets.items():
+            df = df.dropna(how='all').dropna(axis=1, how='all')
+            df['page_content'] = df.apply(
+                lambda row: " | ".join([f"{col}: {val}" for col, val in row.items() if pd.notna(val)]), axis=1
+            )
+            df['sheet_name'] = sheet_name
+            df['source_file'] = os.path.basename(file_path)
+            loader = DataFrameLoader(df, page_content_column="page_content")
+            documents.extend(loader.load())
+
     print(f"Extracted {len(documents)} rows as documents.")
     return documents
 
