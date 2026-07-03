@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { Show, SignInButton, UserButton } from "@clerk/nextjs";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -186,24 +187,47 @@ export default function Home() {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#0d1520] text-[#e2e8f0] font-sans">
+    <>
+      <Show when="signed-out">
+        <div className="flex flex-col items-center justify-center h-screen w-screen bg-[#0d1520] text-white">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-[0_0_24px_rgba(59,130,246,0.5)] mb-6">
+            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M3 3l9 4 9-4v14l-9 4-9-4V3z" opacity="0.7" />
+              <path d="M12 7l9-4-9 10L3 3l9 4z" />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold mb-2">Agentic Financial Analyst</h1>
+          <p className="text-[#64748b] mb-8">Secure enterprise authentication required.</p>
+          <SignInButton mode="modal">
+            <button className="px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-medium transition-colors shadow-lg">
+              Sign In to Continue
+            </button>
+          </SignInButton>
+        </div>
+      </Show>
+
+      <Show when="signed-in">
+        <div className="flex h-screen w-screen overflow-hidden bg-[#0d1520] text-[#e2e8f0] font-sans">
 
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
       <aside className="w-64 flex-shrink-0 flex flex-col bg-[#0d1117] border-r border-[#1e2d42]">
 
         {/* Logo */}
         <div className="p-5 border-b border-[#1e2d42]">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-[0_0_16px_rgba(59,130,246,0.4)]">
-              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M3 3l9 4 9-4v14l-9 4-9-4V3z" opacity="0.7" />
-                <path d="M12 7l9-4-9 10L3 3l9 4z" />
-              </svg>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-[0_0_16px_rgba(59,130,246,0.4)]">
+                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M3 3l9 4 9-4v14l-9 4-9-4V3z" opacity="0.7" />
+                  <path d="M12 7l9-4-9 10L3 3l9 4z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white leading-none">Agentic</p>
+                <p className="text-xs text-[#64748b] leading-none mt-0.5">Financial Analyst</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-bold text-white leading-none">Agentic</p>
-              <p className="text-xs text-[#64748b] leading-none mt-0.5">Financial Analyst</p>
-            </div>
+            <UserButton />
           </div>
         </div>
 
@@ -415,5 +439,7 @@ export default function Home() {
         </div>
       </main>
     </div>
+      </Show>
+    </>
   );
 }
