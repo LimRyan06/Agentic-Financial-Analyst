@@ -1,8 +1,8 @@
-from langchain_community.chat_models import ChatOllama
-from langchain.tools.retriever import create_retriever_tool
-from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain_ollama import ChatOllama
+from langchain_core.tools.retriever import create_retriever_tool
+from langchain_classic.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from .rag_pipeline import get_vector_store
+from rag_pipeline import get_vector_store
 
 # 1. Initialize the Local LLM (Llama 3 via Ollama)
 llm = ChatOllama(model="llama3", temperature=0)

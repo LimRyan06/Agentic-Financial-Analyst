@@ -2,11 +2,13 @@ fastapi
 uvicorn
 pydantic
 python-dotenv
+python-multipart
 langchain
+langchain-core
 langchain-community
-langchain-anthropic
+langchain-ollama
 langchain-postgres
+langchain-text-splitters
 psycopg2-binary
 pandas
 openpyxl
-sentence-transformers
