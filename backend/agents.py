@@ -1,39 +1,53 @@
+import os
+import pandas as pd
 from langchain_ollama import ChatOllama
-from langchain_core.tools.retriever import create_retriever_tool
-from langchain_classic.agents import AgentExecutor, create_tool_calling_agent
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from rag_pipeline import get_vector_store
+from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
 
 # 1. Initialize the Local LLM (Llama 3 via Ollama)
 llm = ChatOllama(model="llama3", temperature=0)
 
-# 2. Create the RAG Tool
+# 2. Create the Pandas DataFrame Agent
 def create_financial_agent():
-    vector_store = get_vector_store()
-    retriever = vector_store.as_retriever(search_kwargs={"k": 5})
+    uploads_dir = "uploads"
+    if not os.path.exists(uploads_dir) or not os.listdir(uploads_dir):
+        raise Exception("No data files have been uploaded yet. Please upload a CSV or Excel file.")
+        
+    # Get the latest uploaded file
+    files = [os.path.join(uploads_dir, f) for f in os.listdir(uploads_dir) if f.endswith(('.csv', '.xlsx', '.xls'))]
+    if not files:
+        raise Exception("No valid Excel or CSV files found in uploads.")
+        
+    latest_file = max(files, key=os.path.getmtime)
     
-    retriever_tool = create_retriever_tool(
-        retriever,
-        "financial_document_search",
-        "Search for information about financial data, reconciliation reports, and Excel spreadsheet contents. Use this to answer questions about the uploaded data."
+    # Load into pandas
+    if latest_file.endswith('.csv'):
+        df = pd.read_csv(latest_file, on_bad_lines='skip')
+    else:
+        df = pd.read_excel(latest_file)
+        
+    # Define custom instructions for charting
+    PREFIX = """
+You are a highly skilled Financial Analyst Agent.
+You have access to a pandas dataframe `df` containing the user's uploaded financial data.
+
+If the user asks you to create a chart, plot, or graph:
+1. Import matplotlib.pyplot as plt
+2. Write the code to generate the plot based on `df`
+3. Save the plot strictly to 'static/chart.png' using plt.savefig('static/chart.png')
+4. Include this exact markdown string in your final response: ![Chart](http://localhost:8080/static/chart.png)
+
+Ensure you clean the data if necessary before plotting. Answer questions professionally and accurately.
+    """
+    
+    # 3. Create the Agent
+    # allow_dangerous_code=True is required for the pandas agent to execute python code locally
+    agent_executor = create_pandas_dataframe_agent(
+        llm,
+        df,
+        verbose=True,
+        allow_dangerous_code=True,
+        prefix=PREFIX,
+        handle_parsing_errors=True
     )
-    
-    tools = [retriever_tool]
-    
-    # 3. Define the Agent's Persona (System Prompt)
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", """You are a highly skilled Financial Analyst and Data Reconciliation Agent. 
-        Your job is to assist users in comparing datasets, finding discrepancies, and summarizing financial reports.
-        Always use the provided 'financial_document_search' tool to look up data before answering.
-        Be professional, concise, and highlight any anomalies clearly.
-        """),
-        ("human", "{input}"),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
-    ])
-    
-    # 4. Create the Agent
-    # Since Llama 3 on Ollama supports tool calling, we use the standard tool calling agent
-    agent = create_tool_calling_agent(llm, tools, prompt)
-    agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
     
     return agent_executor

@@ -5,8 +5,9 @@ import uvicorn
 import os
 import shutil
 
+from fastapi.staticfiles import StaticFiles
 from agents import create_financial_agent
-from rag_pipeline import parse_file_to_documents, ingest_documents
+import pandas as pd
 
 app = FastAPI(
     title="Financial Agent API",
@@ -14,10 +15,16 @@ app = FastAPI(
     version="1.0.0"
 )
 
+os.makedirs("uploads", exist_ok=True)
+os.makedirs("static", exist_ok=True)
+
+# Mount the static directory to serve generated charts
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # Configure CORS so the Next.js frontend can communicate with the backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"], # Next.js default port
+    allow_origins=["http://localhost:3000", "http://localhost:3001"], # Next.js default and alternative ports
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -48,17 +55,12 @@ async def upload_file(file: UploadFile = File(...)):
     if not file.filename.endswith(('.xls', '.xlsx', '.csv')):
         raise HTTPException(status_code=400, detail="Only Excel (.xls, .xlsx) and CSV files are supported.")
         
-    temp_path = f"temp_{file.filename}"
-    try:
-        with open(temp_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-            
-        docs = parse_file_to_documents(temp_path)
-        ingest_documents(docs)
-        return {"status": "success", "message": f"Successfully ingested {file.filename} into the vector database."}
-    finally:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
+    file_path = os.path.join("uploads", file.filename)
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    return {"status": "success", "message": f"Successfully loaded {file.filename} for analysis."}
 
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat_with_agent(request: ChatRequest):

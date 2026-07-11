@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Show, SignInButton, UserButton } from "@clerk/nextjs";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -380,12 +382,18 @@ export default function Home() {
             <div key={i} className={`flex items-start gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               {msg.role === "agent" && <AgentAvatar />}
               <div className={`max-w-[70%] flex flex-col gap-1 ${msg.role === "user" ? "items-end" : "items-start"}`}>
-                <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
+                <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap overflow-hidden ${
                   msg.role === "user"
                     ? "bg-[#1e3a5f] text-white rounded-br-sm"
-                    : "bg-[#131c2b] border border-[#1e2d42] text-[#cbd5e1] rounded-bl-sm"
+                    : "bg-[#131c2b] border border-[#1e2d42] text-[#cbd5e1] rounded-bl-sm prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#0d1520] prose-pre:border prose-pre:border-[#1e2d42] prose-img:rounded-xl prose-img:shadow-lg prose-img:w-full prose-img:mt-3"
                 }`}>
-                  {msg.content}
+                  {msg.role === "agent" ? (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {msg.content}
+                    </ReactMarkdown>
+                  ) : (
+                    msg.content
+                  )}
                 </div>
                 <span className="text-[10px] text-[#475569] px-1">{msg.timestamp}</span>
               </div>

@@ -3,7 +3,7 @@ import pandas as pd
 from typing import List, Dict
 from langchain_community.document_loaders import DataFrameLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import OllamaEmbeddings
+from langchain_ollama import OllamaEmbeddings
 from langchain_postgres.vectorstores import PGVector
 from dotenv import load_dotenv
 
@@ -22,8 +22,15 @@ def parse_file_to_documents(file_path: str):
 
     if ext == ".csv":
         print(f"Parsing CSV file: {file_path}")
-        df = pd.read_csv(file_path)
+        # Skip bad lines to prevent parser errors on messy financial data
+        df = pd.read_csv(file_path, on_bad_lines='skip')
         df = df.dropna(how='all').dropna(axis=1, how='all')
+        
+        # Limit to first 250 rows to prevent local Ollama from timing out on massive files
+        if len(df) > 250:
+            print(f"File too large ({len(df)} rows). Truncating to 250 rows for local embedding performance.")
+            df = df.head(250)
+            
         df['page_content'] = df.apply(
             lambda row: " | ".join([f"{col}: {val}" for col, val in row.items() if pd.notna(val)]), axis=1
         )
@@ -36,6 +43,12 @@ def parse_file_to_documents(file_path: str):
         sheets = pd.read_excel(file_path, sheet_name=None)
         for sheet_name, df in sheets.items():
             df = df.dropna(how='all').dropna(axis=1, how='all')
+            
+            # Limit large Excel sheets to prevent timeout
+            if len(df) > 250:
+                print(f"Sheet {sheet_name} too large ({len(df)} rows). Truncating to 250 rows.")
+                df = df.head(250)
+                
             df['page_content'] = df.apply(
                 lambda row: " | ".join([f"{col}: {val}" for col, val in row.items() if pd.notna(val)]), axis=1
             )
@@ -51,7 +64,10 @@ def get_vector_store():
     """
     Initializes and returns the PGVector database connection.
     """
-    embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL)
+    embeddings = OllamaEmbeddings(
+        model=EMBEDDING_MODEL,
+        base_url="http://localhost:11434",
+    )
     
     vector_store = PGVector(
         embeddings=embeddings,

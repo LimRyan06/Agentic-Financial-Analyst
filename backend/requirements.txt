@@ -12,3 +12,6 @@ langchain-text-splitters
 psycopg2-binary
 pandas
 openpyxl
+langchain-experimental
+matplotlib
+seaborn
