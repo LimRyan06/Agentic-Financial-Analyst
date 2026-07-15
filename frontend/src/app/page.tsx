@@ -128,16 +128,34 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text }),
+        signal: AbortSignal.timeout(120000), // 2 min timeout for large CSVs
       });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ detail: `HTTP error ${res.status}` }));
+        const errMsg = errData.detail || `Server error (${res.status})`;
+        setMessages((prev) => [
+          ...prev,
+          { role: "agent", content: `⚠️ **Agent Error:** ${errMsg}`, timestamp: getTimestamp() },
+        ]);
+        return;
+      }
       const data = await res.json();
+      const reply = data.reply?.trim() || "*(No response from agent — please try again)*";
       setMessages((prev) => [
         ...prev,
-        { role: "agent", content: data.reply, timestamp: getTimestamp() },
+        { role: "agent", content: reply, timestamp: getTimestamp() },
       ]);
-    } catch {
+    } catch (err: unknown) {
+      const isTimeout = err instanceof DOMException && err.name === "TimeoutError";
       setMessages((prev) => [
         ...prev,
-        { role: "agent", content: "⚠️ Could not reach the Agent. Please make sure the backend is running on port 8080.", timestamp: getTimestamp() },
+        {
+          role: "agent",
+          content: isTimeout
+            ? "⚠️ **Timeout:** The agent took too long to respond. Try a simpler question or a smaller file."
+            : "⚠️ **Could not reach the Agent.** Please make sure the backend is running on port 8080.",
+          timestamp: getTimestamp(),
+        },
       ]);
     } finally {
       setIsLoading(false);
