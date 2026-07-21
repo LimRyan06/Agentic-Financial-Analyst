@@ -8,7 +8,7 @@ from langchain_classic.agents.agent_types import AgentType
 llm = ChatOllama(
     model="llama3",
     temperature=0,
-    base_url="http://localhost:11434",
+    base_url="http://127.0.0.1:11434",
 )
 
 # 2. Create the Pandas DataFrame Agent
@@ -48,6 +48,10 @@ If the user asks you to create a chart, plot, or visualize data:
 3. Save it with: plt.savefig('static/chart.png', bbox_inches='tight')
 4. Call plt.close() afterwards to free memory
 5. End your response with this exact line: ![Chart](http://localhost:8080/static/chart.png)
+
+CRITICAL INSTRUCTION: You MUST NOT output both an "Action" and a "Final Answer" in the same response. 
+- If you need to run Python code, ONLY output the Thought and Action block. DO NOT include a Final Answer.
+- If you are ready to give the final answer, ONLY output the Final Answer block. DO NOT include an Action.
 
 Always explore the dataframe first with df.head(), df.dtypes, or df.describe() if needed.
 Answer questions professionally, accurately, and concisely.
