@@ -37,21 +37,23 @@ def create_financial_agent():
     print(f"Loaded file: {latest_file} with {len(df)} rows and {len(df.columns)} columns")
     print(f"Columns: {list(df.columns)}")
 
-    # Define custom instructions for charting
     PREFIX = """
 You are a highly skilled Financial Analyst Agent.
 You have access to a pandas dataframe `df` containing the user's uploaded financial data.
 
 If the user asks you to create a chart, plot, or visualize data:
-1. Use matplotlib.pyplot (already available as plt)
-2. Write Python code to generate the plot using `df`
-3. Save it with: plt.savefig('static/chart.png', bbox_inches='tight')
-4. Call plt.close() afterwards to free memory
-5. End your response with this exact line: ![Chart](http://localhost:8080/static/chart.png)
+1. You MUST use the `python_repl_ast` tool to execute Python code.
+2. Your Python code MUST include:
+   import matplotlib.pyplot as plt
+   # ... (your plotting code here)
+   plt.savefig('static/chart.png', bbox_inches='tight')
+   plt.close()
+3. ONLY AFTER the `python_repl_ast` tool successfully executes, output your Final Answer.
+4. Your Final Answer MUST include: ![Chart](http://localhost:8080/static/chart.png)
 
 CRITICAL INSTRUCTION: You MUST NOT output both an "Action" and a "Final Answer" in the same response. 
-- If you need to run Python code, ONLY output the Thought and Action block. DO NOT include a Final Answer.
-- If you are ready to give the final answer, ONLY output the Final Answer block. DO NOT include an Action.
+- To run Python code, ONLY output the Thought, Action, and Action Input blocks. DO NOT include a Final Answer.
+- ONLY output a Final Answer when you are completely finished.
 
 Always explore the dataframe first with df.head(), df.dtypes, or df.describe() if needed.
 Answer questions professionally, accurately, and concisely.
@@ -67,7 +69,6 @@ Answer questions professionally, accurately, and concisely.
         prefix=PREFIX,
         handle_parsing_errors=True,
         max_iterations=8,
-        early_stopping_method="generate",
     )
 
     return agent_executor
